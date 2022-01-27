@@ -1,0 +1,177 @@
+<?php
+add_action( 'wp_enqueue_scripts', 'my_theme_enqueue_styles' );
+function my_theme_enqueue_styles() {
+    wp_enqueue_style( 'parent-style', get_stylesheet_directory_uri() . '/style.css' );
+      wp_enqueue_style('swiper-css','https://unpkg.com/swiper@7/swiper-bundle.min.css');
+      wp_enqueue_script('swiper-js','https://unpkg.com/swiper@7/swiper-bundle.min.js');
+      wp_enqueue_script('custom-js',get_stylesheet_directory_uri().'/assets/custom.js');
+
+
+}
+	
+
+
+add_theme_support( 'custom-logo' );
+
+function themename_custom_logo_setup() {
+    $defaults = array(
+        'height'      => 100,
+        'width'       => 400,
+        'flex-height' => true,
+        'flex-width'  => true,
+        'header-text' => array( 'site-title', 'site-description' ),
+    );
+    add_theme_support( 'custom-logo', $defaults );
+}
+add_action( 'after_setup_theme', 'themename_custom_logo_setup' );
+
+function customwidget() {
+		register_sidebar( array(
+		'name' => __( 'Site Logo', 'twentyten' ),
+		'id' => 'site',
+		'description' => __( 'The Site Logo widget area', 'twentyten' ),
+		'before_widget' => '<div id="%1$s" class="widget-container %2$s">',
+		'after_widget' => '</div>',
+		'before_title' => '<h3 class="widget-title">',
+		'after_title' => '</h3>',
+	) );
+		register_sidebar( array(
+		'name' => __( 'Top Social Icon', 'twentyten' ),
+		'id' => 'social',
+		'description' => __( 'The social widget area', 'twentyten' ),
+		'before_widget' => '<div id="%1$s" class="widget-container %2$s">',
+		'after_widget' => '</div>',
+		'before_title' => '<h3 class="widget-title">',
+		'after_title' => '</h3>',
+	) );
+		register_sidebar( array(
+		'name' => __( 'Banner Content', 'twentyten' ),
+		'id' => 'baner',
+		'description' => __( 'The banner content widget area', 'twentyten' ),
+		'before_widget' => '<div id="%1$s" class="widget-container %2$s">',
+		'after_widget' => '</div>',
+		'before_title' => '<h3 class="widget-title">',
+		'after_title' => '</h3>',
+	) );
+}
+add_action( 'widgets_init', 'customwidget' );
+
+function blog( $atts ){
+  global $post;
+$temp_post=$post;
+$args = array( 'post_type' => 'post', 'posts_per_page' => 4);
+$output .='<ul>';  
+$outputposts = get_posts( $args );
+foreach($outputposts as $post) : setup_postdata($post);
+ $output .= '<li><a href="'.get_the_permalink().'">';
+   $output .='<div class="zoom">'. get_the_post_thumbnail( $post->ID, 'full' ).'</div>';
+   $output .= '<h3>'.get_the_title().'</h3>';
+  $output .= '</a></li>';
+endforeach;
+$output .= '</ul>';
+$post=$temp_post;
+return $output;
+}
+add_shortcode( 'blog', 'blog' );
+add_filter('use_block_editor_for_post', '__return_false', 10);
+
+
+
+
+// feature product slider 
+
+
+function featured_product_slider(){
+
+	
+
+$output='';
+   
+$tax_query[] = array(
+
+
+       'taxonomy'=>'product_visibility',
+       'field'=>'name',
+       'terms'=>'featured',
+       'operation'=> 'IN' // include featured product
+);
+
+
+
+
+
+   $args=array(
+
+      'post_type'=>'product',
+       'post_status'=>'publish',
+       'tax_query'=>$tax_query
+       
+  );
+
+
+
+$query=new WP_Query($args);
+
+
+
+if ($query->have_posts()) {
+	
+$output .="<div class='carousel-slider'>";
+$output .="<div class='swiper-container'>";
+$output .="<div class='swiper-wrapper'>";
+
+
+while($query->have_posts()) :$query->the_post();
+
+global $product;
+
+$product_cat_name;
+
+$terms = get_the_terms( $query->ID, 'product_cat' );
+
+foreach($terms as $term){
+
+$product_cat_name=$term->name;
+
+}
+
+$output .="<div class='swiper-slide'>
+
+<div class='product_thumbnail'><a href=".get_the_permalink().">".get_the_post_thumbnail($query->ID,'full')."</a></div>
+<div class='product_category'>".$product_cat_name."</div>
+<div class='product_price'><a href=".get_the_permalink().">"."Buy Now<br>"."$".$product->get_regular_price()."</a></div>
+<div class='product_title'>".get_the_title()."</div>
+
+</div>";
+
+
+
+
+
+	endwhile;
+}
+
+wp_reset_postdata();
+$output .="</div></div>";
+
+$output .="<div class='swiper-pagination'></div>";
+
+$output .="<div class='swiper-button-prev'></div>";
+$output .="<div class='swiper-button-next'></div>";
+
+
+
+$output .="</div>";
+
+
+echo $output;
+  
+}
+
+
+add_shortcode('featured_product_slider','featured_product_slider');
+
+
+
+
+
